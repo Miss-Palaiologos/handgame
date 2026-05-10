@@ -1,0 +1,17 @@
+# 掌心战争 - 运行环境依赖
+# GPU: NVIDIA, 8GB 显存可用 (RTX 3060 / RTX 4060 等)
+
+# Python >= 3.10
+# 推荐 Python 3.10 或 3.11
+
+# ── 核心依赖 ──────────────────────────────────────────────
+numpy>=1.24.0
+
+# PyTorch CUDA 12.1 (NVIDIA 8GB 够用, 约 2-3GB VRAM)
+# 安装命令: pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+torch>=2.0.0
+torchvision>=0.15.0   # 可选, 仅部分可视化功能用到
+
+# ── 其他 (可选) ───────────────────────────────────────────
+# stable-baselines3>=2.0.0   # 如果要用 Stable Baselines3 替代手写 DQN
+# matplotlib>=3.7.0           # 如果要画训练曲线图
