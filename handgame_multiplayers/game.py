@@ -82,12 +82,19 @@ class Game:
         if self.verbose:
             print(message)
 
+    def _is_eliminated(self, player: BasicHero) -> bool:
+        """无副作用的淘汰判定，避免调用 is_defeated() 触发复活甲逻辑。"""
+        return player.hp <= 0 and player.revival_armor <= 0
+
     def show_status(self) -> None:
         print("当前状态：")
         for player in self.players:
             print(f"  {player.get_status_display()}")
 
     def prompt_action(self, player_index: int, player: BasicHero) -> Tuple[int, Optional[int]]:
+        if self._is_eliminated(player):
+            return 0, None
+
         while True:
             available_actions = player.get_available_actions()
             if not available_actions:
@@ -155,6 +162,15 @@ class Game:
     def prompt_target(self, player_index: int, player: BasicHero) -> Optional[int]:
         # 将当前玩家索引传入角色的目标生成器，角色可以据此返回合法目标
         available_targets = player.get_available_target(player_index, list(self.players))
+        available_targets = [
+            (target_id, target_name)
+            for target_id, target_name in available_targets
+            if 0 <= target_id < len(self.players) and not self._is_eliminated(self.players[target_id])
+        ]
+
+        if not available_targets:
+            self.console.print("当前没有可选目标。")
+            return None
 
         raw = ""
         while True:
@@ -196,6 +212,9 @@ class Game:
         plans: list[Tuple[int, Optional[int]]] = []
         total = len(self.players)
         for idx, player in enumerate(self.players):
+            if self._is_eliminated(player):
+                plans.append((0, None))
+                continue
             plan = self._choose_action_for_player(idx, player)
             plans.append(plan)
 
@@ -203,11 +222,23 @@ class Game:
 
     def _choose_action_for_player(self, player_index: int, player: BasicHero) -> Tuple[int, Optional[int]]:
         """多玩家版本的出招选择；AI 会以下一个玩家作为默认对手用于决策。"""
+        if self._is_eliminated(player):
+            return 0, None
+
         controller = self.player_ai_controllers[player_index]
         if controller is not None:
-            # 选择下一个索引作为默认敌手（回合制多人大多数场景以邻位为目标）
-            enemy_index = (player_index + 1) % len(self.players)
-            enemy = self.players[enemy_index]
+            # 选择下一个仍存活的索引作为默认敌手。
+            enemy = None
+            for step in range(1, len(self.players)):
+                enemy_index = (player_index + step) % len(self.players)
+                candidate = self.players[enemy_index]
+                if not self._is_eliminated(candidate):
+                    enemy = candidate
+                    break
+
+            if enemy is None:
+                return 0, None
+
             plan = controller.choose_action(player, enemy)
             self.debug_print(
                 f"{player.name} (AI) 选择: {plan.action_id} / {plan.action_name} / target={plan.target_index}"
@@ -255,7 +286,11 @@ class Game:
         work_list.sort(key=lambda x: action_order.get(x[3], 999))
 
         for player, action_id, target_idx, action_type in work_list:
+            if self._is_eliminated(player):
+                continue
             target = all_heroes[target_idx] if target_idx is not None and 0 <= target_idx < len(all_heroes) else None
+            if target is not None and self._is_eliminated(target):
+                target = None
             self.debug_print(f"{player.name} 应用行动 {action_id}")
             player.apply_action(action_id, target, all_heroes)
 
@@ -276,7 +311,6 @@ class Game:
 
     def mark_phase(self) -> None:
         self.debug_print("\n========== 印记结算阶段 ==========")
-        self.debug_print("当前版本未实现额外印记效果。")
         for player in self.players:
             player.apply_stamp()
 

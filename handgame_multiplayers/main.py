@@ -1,5 +1,6 @@
 from game import Game
-from heros.basic import BasicHero
+import heros.basic
+import heros.hunter
 
 def main() -> None:
     print("双人控制台对战：手牌小游戏")
@@ -18,11 +19,10 @@ def main() -> None:
             break
         print("请输入 y 或 n。")
 
-    p1 = BasicHero("玩家1")
-    p2 = BasicHero("玩家2")
-    p3 = BasicHero("玩家3")
-    p4 = BasicHero("玩家4")
-    game = Game(p1, p2, p3, p4, verbose=verbose)
+    p1 = heros.basic.BasicHero("玩家1")
+    p2 = heros.basic.BasicHero("玩家2")
+    p3 = heros.hunter.Hunter("玩家3")
+    game = Game(p1, p2, p3, verbose=verbose)
     game.run()
 
 

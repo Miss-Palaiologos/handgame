@@ -1,5 +1,10 @@
 from typing import List, Tuple, Optional
 
+class stamp:
+    def __init__(self, source, target, name):
+        self.source = source  # 印记来源
+        self.target = target  # 印记目标 
+        self.name = name
 
 class attack_action:
     def __init__(self, attack_value, target, source, attack_type, damage_type):
@@ -89,7 +94,7 @@ class BasicHero:
     def get_available_target(self, action_id, player_list):
         available_targets = []
         for i, player in enumerate(player_list):
-            if player != self:
+            if player != self and not (player.hp <= 0 and player.revival_armor <= 0):
                 available_targets.append((i, player.name))
         return available_targets
 
@@ -356,6 +361,12 @@ class BasicHero:
         self.mp_stack.clear()
 
     def apply_stamp(self):
+        while self.stamp_stack:
+            stamp = self.stamp_stack.pop(0)
+            self.stamp_effect(stamp)
+
+    def stamp_effect(self, stamp: stamp):
+        # 在其他玩家的apply_stamp函数中被调用，根据stamp的name和source来对target造成伤害、治疗、增益、减益等
         pass
 
     def is_defeated(self):

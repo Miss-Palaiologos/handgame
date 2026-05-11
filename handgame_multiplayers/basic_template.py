@@ -1,3 +1,9 @@
+class stamp:
+    def __init__(self, source, target, name):
+        self.source = source  # 印记来源
+        self.target = target  # 印记目标 
+        self.name = name
+
 class attack_action:
     def __init__(self, attack_value, target, source, attack_type, damage_type):
         self.attack_value = attack_value
@@ -93,7 +99,11 @@ class hero:
         pass
 
     def apply_stamp(self):
-        # 在印记结算阶段调用，根据stamp_stack应用印记效果，暂时先不设计具体内容，预留给后续设计使用
+        # 在印记结算阶段调用，循环弹出自己的stamp_stack中的印记，根据印记的source调用对应角色的stamp_effect函数来应用印记效果，印记效果可能会基于印记的name和source来对target造成伤害、治疗、增益、减益等
+        pass
+
+    def stamp_effect(self,stamp: stamp):
+        # 在其他玩家的apply_stamp函数中被调用，根据stamp的name和source来对target造成伤害、治疗、增益、减益等
         pass
 
     def is_defeated(self):
