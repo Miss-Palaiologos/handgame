@@ -119,8 +119,7 @@ class BasicHero:
             if all_heroes:
                 for hero in all_heroes:
                     if hero != self:
-                        action = attack_action(attack_value, hero, self, "group-attack", damage_type)
-                        self._append_shared_attack(action, hero)
+                        self._apply_group_attack(hero, attack_value, damage_type)
             return
 
         if action_type == "anti-group-attack":
@@ -174,6 +173,17 @@ class BasicHero:
         if counter is not None:
             self._resolve_attack_diff(action, counter)
 
+    def _apply_group_attack(self, target, attack_value, damage_type):
+        action = attack_action(attack_value, target, self, "group-attack", damage_type)
+        group_actions = [
+            a for a in target.defense_stack
+            if a.attack_type == "group-attack"
+        ]
+        self._append_shared_attack(action, target)
+
+        if group_actions:
+            self._resolve_group_attack_diff(action, group_actions)
+
     def _apply_anti_group_attack(self, target, attack_value, damage_type):
         action = attack_action(attack_value, target, self, "anti-group-attack", damage_type)
         self._append_shared_attack(action, target)
@@ -182,8 +192,9 @@ class BasicHero:
             a for a in self.defense_stack
             if a.attack_type == "group-attack" and a.source == target
         ]
+        
         if group_actions:
-            self._zero_actions(group_actions)
+            self._zero_actions([a for a in self.defense_stack if a.attack_type == "group-attack"])
             return
 
         counter = next(
@@ -201,6 +212,18 @@ class BasicHero:
         new_counter = max(0, counter.attack_value - action.attack_value)
         action.attack_value = new_action
         counter.attack_value = new_counter
+
+    def _resolve_group_attack_diff(
+        self,
+        action: attack_action,
+        counters: List[attack_action],
+    ) -> None:
+        original_action_value = action.attack_value
+        original_counter_values = [counter.attack_value for counter in counters]
+
+        action.attack_value = max(0, original_action_value - sum(original_counter_values))
+        for counter, original_counter_value in zip(counters, original_counter_values):
+            counter.attack_value = max(0, original_counter_value - original_action_value)
 
     def _apply_small_defense(self, defense_value):
         target_actions = [
@@ -296,7 +319,8 @@ class BasicHero:
         physical_damage = 0
         real_damage = 0
         magic_damage = 0
-        for action in self.defense_stack:
+        while self.defense_stack:
+            action = self.defense_stack.pop(0)
             if action.attack_value <= 0:
                 continue
             amount = action.attack_value
@@ -357,3 +381,7 @@ class BasicHero:
             f"{self.name}: HP {hp_blocks or '空'} ({self.hp}/{self.hp_ceiling}), "
             f"MP {mp_blocks or '空'} ({self.mp}/{self.mp_ceiling}), 复活甲 {self.revival_armor}"
         )
+
+if __name__ == "__main__":
+    hero = BasicHero("测试英雄")
+    print(hero.get_status_display())

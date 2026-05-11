@@ -95,7 +95,7 @@ class Game:
                 return 0, None
 
             action_line = "  ".join(
-                f"{action_id}. {name} [MP {next((info[2] for info in player.action_list if info[0] == action_id), 0):+d}]"
+                f"{action_id}. {name} [MP {next((info[2] for info in player.action_list if info[0] == action_id), 0):-d}]"
                 + (" (需要目标)" if need_target else "")
                 for action_id, name, need_target in available_actions
             )
@@ -156,15 +156,29 @@ class Game:
         # 将当前玩家索引传入角色的目标生成器，角色可以据此返回合法目标
         available_targets = player.get_available_target(player_index, list(self.players))
 
+        raw = ""
         while True:
             target_line = "  ".join(f"{target_id}. {target_name}" for target_id, target_name in available_targets)
-            grid = Table.grid(expand=False)
-            grid.add_row(f"{player.name} 请选择目标（输入 back 返回选择行动）：")
-            grid.add_row(target_line)
+            def generate_panel(raw: str) -> Panel:
+                grid = Table.grid(expand=False)
+                grid.add_row(f"{player.name} 请选择目标（输入 back 返回选择行动）：")
+                grid.add_row(target_line)
+                grid.add_row("输入目标编号或 back：" + raw)
 
-            panel = Panel(grid, title=f"{player.name} 目标选择")
-            with Live(panel, console=self.console, transient=True):
-                raw = self.console.input("输入目标编号或 back：").strip().lower()
+                panel = Panel(grid, title=f"{player.name} 目标选择")
+                return panel
+
+            with Live(generate_panel(raw), console=self.console, transient=True) as live:
+                while True:
+                    if msvcrt.kbhit():
+                        ch = msvcrt.getch().decode("utf-8", errors="ignore")
+                        if ch in ('\r', '\n'):
+                            break
+                        elif ch == '\x08':
+                            raw = raw[:-1]
+                        elif ch.isprintable():
+                            raw += ch
+                        live.update(generate_panel(raw))
 
             if raw == "back":
                 return None
@@ -295,7 +309,10 @@ class Game:
             if player.is_defeated() and player.name not in self.ranking_list.keys():
                 self.ranking_list[player.name] = len(alive)+1
 
-        if len(alive) == 1 or (len(alive) == 0 and len(self.ranking_list) == len(self.players)):
+        if len(alive) == 1 :
+            self.ranking_list[alive[0].name] = 1
+            return self.ranking_list
+        elif len(alive) == 0:
             return self.ranking_list
         return None
 
