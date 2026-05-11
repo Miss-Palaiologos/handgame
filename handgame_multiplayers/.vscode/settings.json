@@ -1,0 +1,16 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^c:\\\\python314\\\\python\\.exe -m py_compile F:\\\\handgame\\\\main\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^c:\\\\python314\\\\python\\.exe -m py_compile main\\.py game\\.py heros/basic\\.py heros/__init__\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^c:\\\\python314\\\\python\\.exe -c \"from heros\\.basic import BasicHero; from game import Game; p1=BasicHero\\('A'\\); p2=BasicHero\\('B'\\); p1\\.apply_action\\(3,None,\\[p1,p2\\]\\); p2\\.apply_action\\(6,None,\\[p1,p2\\]\\); p1\\._apply_ricochet\\(\\[p1,p2\\]\\); p1\\.update_status\\(\\); p2\\.update_status\\(\\); print\\('A',p1\\.hp,p1\\.mp\\); print\\('B',p2\\.hp,p2\\.mp\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
